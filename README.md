@@ -1,66 +1,175 @@
-# StudyFlow
+# StudyFlow 🎓
 
-A study planner built with **Kotlin Multiplatform** and **Compose Multiplatform**.
-One shared codebase runs on **Android** and **Desktop (Windows / macOS / Linux)**, and the two
-versions keep each other in sync over your local Wi-Fi: no account, no cloud.
+A modern, offline-first study companion built with **Kotlin Multiplatform** and **Compose
+Multiplatform**. One shared codebase runs seamlessly on **Android** and **Desktop (macOS / Windows /
+Linux)** with local peer-to-peer Wi-Fi synchronization, an AI study assistant, and gamification
+rewards.
 
-## Features
+---
 
-- **Timetable**: weekly classes with room, colour tag and clash warnings
-- **Deadlines**: assignments grouped into Overdue / Next 7 days / Later, priorities, subjects, notes
-- **Focus timer**: Pomodoro-style focus and break phases, saved sessions, 7-day focus chart
-- **Today**: what is next, what is due, how much you have focused
-- **Offline first**: everything is stored on the device and works without internet
-- **Phone ⇄ desktop sync**: the desktop app can act as a sync hub; the phone merges with it
-  (newest edit wins, deletions sync too, pairing code protects your data)
+## 🌟 Key Features
 
-## Run it
+- 📅 **Timetable & Schedule Management**:
+    - Weekly class scheduling with room details, color tags, and automated time-clash detection.
+- 🎯 **Deadline & Assignment Tracker**:
+    - Organizes assignments by urgency (*Overdue*, *Next 7 Days*, *Later*).
+    - Priority flags (High, Medium, Low), course association, exam countdowns, and notes.
+- ⏱️ **Focus Timer (Pomodoro)**:
+    - Customizable focus and break intervals powered by an internal deterministic state machine.
+    - Historical session logging and 7-day focus analytics.
+- 🤖 **AI Study Assistant**:
+    - Integration with Anthropic's Claude API for instant tutoring, study plans, summary creation,
+      and quiz generation.
+    - Local study note archiving for saving useful AI answers offline.
+- 🏆 **Gamification & Achievements**:
+    - Earn XP, level up, unlock achievement badges, and track daily study streaks.
+    - Idempotent XP tracking ensures rewards sync seamlessly across devices without double-counting.
+- 🔄 **Local Peer-to-Peer Sync (No Cloud Required)**:
+    - Phone ⇄ Desktop synchronization over local Wi-Fi via an embedded Ktor HTTP server and client.
+    - Protected by a 6-digit pairing code header (`X-Sync-Code`) with Last-Write-Wins merge logic
+      and tombstone deletions.
+- 🎨 **Personalization & Theme Customization**:
+    - Light, Dark, and System color modes with custom accent color palettes.
+    - Adaptive layouts for mobile screens and multi-pane desktop windows.
 
-You need **Android Studio** (or IntelliJ IDEA) with the Kotlin Multiplatform plugin and **JDK 17+**.
+---
 
-1. Open this folder as a project and let Gradle sync.
-2. **Desktop:** `./gradlew :composeApp:run`  (Windows: `gradlew.bat :composeApp:run`)
-3. **Android:** pick the `composeApp` run configuration and press Run on an emulator or a phone.
-4. **Tests:** `./gradlew :composeApp:desktopTest`
+## 🏗️ Architecture & Project Structure
 
-## Try the sync
-
-1. Start the desktop app, open the **Sync** tab and switch on **"This computer is the sync hub"**.
-   It shows a 6-digit pairing code and an address such as `192.168.1.20:8765`.
-2. On the phone (same Wi-Fi) open **Sync**, type that address and the code, press **Sync now**.
-3. Add a deadline on either device and sync again, and it appears on both.
-
-Tips: the Android emulator reaches your computer at `10.0.2.2:8765`. If the phone cannot connect,
-allow Java through the Windows firewall for private networks (port 8765).
-
-## How it is built
+The project follows clean architecture principles tailored for Kotlin Multiplatform (KMP) and
+Compose Multiplatform:
 
 ```
-composeApp/src
-├── commonMain      shared by every platform (~90 % of the code)
-│   ├── model/      data classes (@Serializable) and the Syncable interface
-│   ├── logic/      timetable and deadline rules (pure functions)
-│   ├── focus/      TimerMachine (pure state machine) + FocusTimer (runs it on the clock)
-│   ├── data/       StudyRepository (single source of truth), SettingsStore, Storage interface
-│   ├── sync/       last-write-wins merge, SyncController (Ktor client), SyncHost interface
-│   └── ui/         Compose Multiplatform screens
-├── androidMain     Application, Activity, file storage, ringtone alert
-└── desktopMain     window, file storage, embedded Ktor server (the sync hub)
+StudyFlow/
+├── build.gradle.kts                # Root build configuration
+├── settings.gradle.kts             # Subproject inclusions and plugin management
+├── gradle/libs.versions.toml       # Version catalog (Dependencies & SDK versions)
+└── composeApp/
+    ├── build.gradle.kts            # Compose Multiplatform build file
+    └── src/
+        ├── commonMain/              # ~90% of codebase shared across all targets
+        │   └── kotlin/com/studyflow/
+        │       ├── AppContainer.kt  # Root Dependency Injection container
+        │       ├── model/           # Data models (@Serializable, Syncable interface)
+        │       ├── logic/           # Domain logic (Timetable clash check, Schedule, Stats)
+        │       ├── focus/           # FocusTimer & TimerMachine state engine
+        │       ├── data/            # StudyRepository (single source of truth), SettingsStore
+        │       ├── sync/            # Merge engine, SyncController (Ktor client)
+        │       ├── ai/              # AssistantClient (Ktor HTTP client for Claude API)
+        │       ├── util/            # Utilities (Format, TimeUtil, Pickers, Ids)
+        │       └── ui/              # Compose Multiplatform UI (Screens, Cards, Components)
+        │
+        ├── androidMain/             # Android platform implementation
+        │   ├── AndroidManifest.xml  # Manifest definition with network security config
+        │   └── kotlin/com/studyflow/# MainActivity, StudyFlowApp, Storage.android, Notifier
+        │
+        ├── desktopMain/             # Desktop (JVM) platform implementation
+        │   └── kotlin/com/studyflow/# Main window entry, DesktopSyncHost (Embedded Ktor Server)
+        │
+        ├── iosMain/                 # iOS (Native) platform implementation
+        │   └── kotlin/com/studyflow/# MainViewController (Swift export), Storage.ios, PlatformActions
+        │
+        └── commonTest/              # Cross-platform unit test suite
+            └── kotlin/com/studyflow/# State machine, merge engine, and logic tests
 ```
 
-Where Kotlin Multiplatform's `expect`/`actual` is used: `createStorage()`.
-Platform-only code is kept tiny; the desktop-only sync hub plugs in through the shared `SyncHost` interface.
+---
 
-**Sync design.** Every item has an `id`, an `updatedAt` time and a `deleted` flag. Deleting marks the
-item instead of removing it, so the deletion can travel to the other device. Merging keeps the newest
-copy of each id, which makes syncing idempotent: syncing twice changes nothing.
+## 🛠️ Tech Stack & Libraries
 
-**Tech:** Kotlin 2.1, Compose Multiplatform 1.8, Material 3, kotlinx-coroutines, kotlinx-serialization,
-kotlinx-datetime, Ktor (client on both platforms, server on desktop).
+- **Language & Runtime**: Kotlin 2.1+, JDK 17+
+- **UI Toolkit**: Compose Multiplatform 1.8+ (Material 3)
+- **Asynchronous & Reactive Programming**: Kotlin Coroutines & `StateFlow`
+- **Serialization**: `kotlinx.serialization` (JSON)
+- **Date & Time**: `kotlinx-datetime`
+- **Networking**: Ktor Client (OkHttp for Android, CIO for Desktop, Darwin for iOS) & Ktor Server (
+  Desktop Sync Hub)
+- **Testing**: `kotlin.test` framework
 
-## Known limitations / ideas
+---
 
-- Sync works on the same local network only (plain HTTP protected by a pairing code).
-- No system notifications for deadlines yet (the focus timer plays a sound when a phase ends).
-- iOS target not added yet: the shared code is ready for it, it needs a Mac with Xcode.
-- Natural next steps: deadline notifications, a week-grid timetable view, cloud relay for sync outside Wi-Fi.
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Android Studio** (2024.1+ recommended) with the **Kotlin Multiplatform** plugin.
+- **JDK 17** or higher.
+
+### Running the App
+
+1. **Desktop App (macOS / Windows / Linux)**:
+   ```bash
+   ./gradlew :composeApp:run
+   ```
+2. **Android App**:
+    - Open the project in Android Studio.
+    - Select the `composeApp` run configuration and select your connected Android device or
+      emulator.
+    - Click **Run**.
+
+3. **Running Automated Tests**:
+   ```bash
+   ./gradlew :composeApp:desktopTest
+   ```
+
+---
+
+## 🔁 How Local Peer-to-Peer Sync Works
+
+StudyFlow allows your Android phone and Desktop computer to keep data in sync on the same Wi-Fi
+network without relying on any cloud provider or account registration:
+
+1. **Start the Desktop Sync Hub**:
+    - Open StudyFlow on Desktop, navigate to the **Sync** tab, and toggle **"This computer is the
+      sync hub"**.
+    - The desktop displays an IP address (e.g., `192.168.1.20:8765`) and a randomly generated *
+      *6-digit pairing code**.
+2. **Connect from Android**:
+    - Open StudyFlow on your phone (connected to the same Wi-Fi).
+    - Go to **Sync**, enter the IP address and pairing code displayed on the desktop, and tap **Sync
+      Now**.
+3. **Synchronization Logic**:
+    - Items use deterministic UUIDs and carry an `updatedAt` timestamp and a `deleted` flag (
+      tombstone).
+    - Sync merging follows **Last-Write-Wins (LWW)** semantics, making the sync operation idempotent
+      and network fault-tolerant.
+
+*Note for Android Emulator*: Use `10.0.2.2:8765` as the target host IP when testing sync against a
+desktop hub running on the local host.
+
+---
+
+## 🤖 Configuring the AI Study Assistant
+
+1. Obtain an API Key from [console.anthropic.com](https://console.anthropic.com/).
+2. Open StudyFlow, navigate to **Settings**, and paste your API key under **AI Study Assistant**.
+3. Select your preferred model (e.g., `claude-3-5-sonnet-20241022` or `claude-3-5-haiku-20241022`).
+4. Access the **Assistant** tab to ask homework questions, request topic summaries, or generate
+   practice quizzes. Useful answers can be saved directly into your local **Notes**.
+
+---
+
+## 🛡️ Source Control & Security Audit
+
+A repository audit was performed to ensure code quality, security, and version control hygiene:
+
+- ✅ **Secret Leak Inspection**: **Passed**. No API keys, passwords, or authentication tokens are
+  hardcoded in the source code.
+- ✅ **Malware / Command Execution Audit**: **Passed**. No malicious shell commands, dynamic code
+  evaluations, or unauthorized remote invocations exist.
+- ⚠️ **Git Hygiene Recommendations**:
+    - `local.properties`: Contains developer-specific SDK paths; should be removed from git
+      tracking (`git rm --cached local.properties`).
+    - `.idea/` workspace files (e.g., `deviceStreaming.xml`) and `.kotlin/` sessions should be
+      excluded via `.gitignore`.
+- ⚠️ **Stray Artifact Cleanup**:
+    - Unused zero-byte duplicate files in `src/commonMain/kotlin/com/studyflow/ui/` resulting from
+      extracted patches should be pruned.
+    - `personalization-update.zip` in `commonMain/kotlin/com/studyflow/ui/` should be removed from
+      source control.
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENCE` for details.
