@@ -21,4 +21,4 @@ fun dayBounds(now: Long): Pair<Long, Long> {
 }
 
 /** Which calendar day (in the device time zone) a moment falls on, as a day number. */
-fun epochDay(millis: Long): Long = millis.toLocal().date.toEpochDays().toLong()
+fun epochDay(millis: Long): Long = millis.toLocal().date.toEpochDays()

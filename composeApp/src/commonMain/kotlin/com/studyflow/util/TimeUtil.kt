@@ -1,12 +1,13 @@
 package com.studyflow.util
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.number
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 
@@ -25,7 +26,7 @@ fun isoDay(dt: LocalDateTime): Int = dt.dayOfWeek.isoDayNumber
 
 /** A date plus a minute-of-day in the device time zone -> epoch millis. */
 fun toMillis(date: LocalDate, minuteOfDay: Int): Long =
-    LocalDateTime(date.year, date.monthNumber, date.dayOfMonth, minuteOfDay / 60, minuteOfDay % 60)
+    LocalDateTime(date.year, date.month.number, date.day, minuteOfDay / 60, minuteOfDay % 60)
         .toInstant(zone())
         .toEpochMilliseconds()
 
@@ -40,12 +41,12 @@ fun parseDate(text: String): LocalDate? =
 /** "Thu 15 Oct, 18:00" */
 fun formatDue(millis: Long): String {
     val dt = millis.toLocal()
-    return "${DAY_SHORT[isoDay(dt) - 1]} ${dt.dayOfMonth} ${MONTH_SHORT[dt.monthNumber - 1]}, ${formatMinute(minuteOfDay(dt))}"
+    return "${DAY_SHORT[isoDay(dt) - 1]} ${dt.day} ${MONTH_SHORT[dt.month.number - 1]}, ${formatMinute(minuteOfDay(dt))}"
 }
 
 /** "Thursday, 15 October" */
 fun formatDateLong(dt: LocalDateTime): String =
-    "${DAY_LONG[isoDay(dt) - 1]}, ${dt.dayOfMonth} ${MONTH_LONG[dt.monthNumber - 1]}"
+    "${DAY_LONG[isoDay(dt) - 1]}, ${dt.day} ${MONTH_LONG[dt.month.number - 1]}"
 
 /** "in 2d 3h" or "overdue by 5h 10m" */
 fun relativeDue(dueAt: Long, now: Long): String =
@@ -59,4 +60,4 @@ fun pickerMillisToDate(millis: Long): LocalDate =
 
 /** "Thu 15 Oct 2026" */
 fun formatDate(date: LocalDate): String =
-    "${DAY_SHORT[date.dayOfWeek.isoDayNumber - 1]} ${date.dayOfMonth} ${MONTH_SHORT[date.monthNumber - 1]} ${date.year}"
+    "${DAY_SHORT[date.dayOfWeek.isoDayNumber - 1]} ${date.day} ${MONTH_SHORT[date.month.number - 1]} ${date.year}"
