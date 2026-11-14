@@ -1,0 +1,21 @@
+# Xcode
+build/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcworkspace
+xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods
+Pods/
+
+# Other
+*.moved-aside
+*.xcuserstate
+.DS_Store
+/KotlinMultiplatformLinkedPackage/*
