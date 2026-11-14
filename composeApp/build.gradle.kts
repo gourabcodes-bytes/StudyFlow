@@ -51,7 +51,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.cmp.runtime)
             implementation(libs.cmp.foundation)
-            implementation(compose.material3)
+            implementation(libs.cmp.material3)
             implementation(libs.cmp.ui)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)

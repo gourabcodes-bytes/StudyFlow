@@ -36,6 +36,7 @@ private class NsDocumentStorage : Storage {
     override suspend fun write(name: String, text: String) {
         withContext(Dispatchers.IO) {
             val path = "$docsPath/$name"
+            @Suppress("CAST_NEVER_SUCCEEDS")
             (text as NSString).writeToFile(path, atomically = true, encoding = NSUTF8StringEncoding, error = null)
         }
     }
